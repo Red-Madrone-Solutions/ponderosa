@@ -1,0 +1,18 @@
+{
+    "name": "rms/ponderosa",
+    "description": "Pinecone client",
+    "autoload": {
+        "psr-4": {
+            "Rms\\Ponderosa\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Matt Vanderpol",
+            "email": "matt@redmadronesolutions.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^7.8"
+    }
+}
