@@ -16,7 +16,7 @@ class ResponseData
 
     public function json() : array
     {
-        return json_decode($this->response->getBody());
+        return json_decode($this->response->getBody(), true);
     }
 
     public function isSuccessful() : bool
