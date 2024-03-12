@@ -115,9 +115,17 @@ class Client
         string $namespace = '',
     ) : ResponseData
     {
+        return $this->deleteBulk( [ $vector_id ], $namespace );
+    }
+
+    public function deleteBulk(
+        array $vector_ids,
+        string $namespace = '',
+    ) : ResponseData
+    {
         $body = [
             'deleteAll' => false,
-            'ids' => [ $vector_id ],
+            'ids' => $vector_ids,
         ];
 
         if ( !empty($namespace) ) {
