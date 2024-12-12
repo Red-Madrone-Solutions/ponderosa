@@ -140,6 +140,24 @@ class Client
 
         return new ResponseData( $this->guzzle->send($request) );
     }
+
+    public function deleteAll(
+        string $namespace
+    ) : ResponseData
+    {
+        $body = [
+            'deleteAll' => true,
+            'namespace' => $namespace,
+        ];
+
+        $request = new Request(
+            method: 'POST',
+            uri: 'vectors/delete',
+            body: json_encode($body),
+        );
+
+        return new ResponseData( $this->guzzle->send($request) );
+    }
 }
 
 
