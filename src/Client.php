@@ -4,6 +4,7 @@ namespace Rms\Ponderosa;
 
 use GuzzleHttp\Client as GuzzleHttpClient;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
 use Rms\Ponderosa\Data\ResponseData;
 
 class Client
@@ -21,14 +22,22 @@ class Client
             $this->index_host = $this->getIndexHost();
         }
 
-        $this->guzzle = new GuzzleHttpClient([
-            'base_uri' => $this->index_host,
-            'headers'  => [
-                'Api-Key'      => $this->api_key,
-                'Accept'       => 'application/json',
-                'Content-Type' => 'application/json',
-            ],
-        ]);
+        // Try to get the Guzzle client from the container
+        if (function_exists('app')) {
+            $this->guzzle = app(GuzzleHttpClient::class);
+        }
+
+        // If the Guzzle client is not set, create a new one
+        if (!isset($this->guzzle)) {
+            $this->guzzle = new GuzzleHttpClient([
+                'base_uri' => $this->index_host,
+                'headers'  => [
+                    'Api-Key'      => $this->api_key,
+                    'Accept'       => 'application/json',
+                    'Content-Type' => 'application/json',
+                ],
+            ]);
+        }
     }
 
     protected function getIndexHost() : string
@@ -50,7 +59,10 @@ class Client
 
     public function describeIndexStats()
     {
-        $request = new Request('POST', 'describe_index_stats');
+        $request = $this->buildRequest(
+            method: 'POST',
+            uri: 'describe_index_stats',
+        );
         $response = $this->guzzle->send($request);
         return json_decode($response->getBody(), true);
     }
@@ -78,16 +90,36 @@ class Client
             $body['filter'] = $filter;
         }
 
-        $request = new Request(
+        $request = $this->buildRequest(
             method: 'POST',
             uri: '/query',
-            body: json_encode($body),
+            body: $body,
         );
 
         $response = $this->guzzle->send($request);
         return new ResponseData($response);
     }
 
+
+    protected function buildRequest(
+        string $method,
+        string $uri,
+        array $body = [],
+    ) : Request
+    {
+        $request = new Request(
+            method: $method,
+            uri: $uri,
+            body: json_encode($body),
+        );
+        if ($this->api_key) {
+            $request = $request->withHeader('Api-Key', $this->api_key);
+        }
+        $request = $request->withHeader('Content-Type', 'application/json');
+        $request = $request->withHeader('Accept', 'application/json');
+        $request = $request->withUri(new Uri($this->index_host . $uri));
+        return $request;
+    }
 
     public function upsert(
         array $vectors,
@@ -101,10 +133,10 @@ class Client
             $body['namespace'] = $namespace;
         }
 
-        $request = new Request(
+        $request = $this->buildRequest(
             method: 'POST',
             uri: 'vectors/upsert',
-            body: json_encode($body),
+            body: $body,
         );
         $response = $this->guzzle->send($request);
         return new ResponseData($response);
@@ -132,10 +164,10 @@ class Client
             $body['namespace'] = $namespace;
         }
 
-        $request = new Request(
+        $request = $this->buildRequest(
             method: 'POST',
             uri: 'vectors/delete',
-            body: json_encode($body),
+            body: $body,
         );
 
         return new ResponseData( $this->guzzle->send($request) );
@@ -150,10 +182,10 @@ class Client
             'namespace' => $namespace,
         ];
 
-        $request = new Request(
+        $request = $this->buildRequest(
             method: 'POST',
             uri: 'vectors/delete',
-            body: json_encode($body),
+            body: $body,
         );
 
         return new ResponseData( $this->guzzle->send($request) );
